@@ -7,46 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-03-16
+
 ### Added
-- **MCP UI Integration** - Full support for [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) specification. Tools with `_meta.ui.resourceUri` now open interactive browser UIs:
-  - Sandboxed iframe rendering with CSP support
+- **MCP UI Integration** - Support for the [MCP UI](https://github.com/MCP-UI-Org/mcp-ui) standard. Tools with `_meta.ui.resourceUri` open interactive UIs:
   - Bidirectional AppBridge communication (tool calls, messages, context updates)
   - Works with both stdio and HTTP MCP servers
   - User consent management for tool calls from UI (configurable: never/once-per-server/always)
-  - Display mode switching (inline/fullscreen/pip)
   - Keyboard shortcuts: Cmd/Ctrl+Enter to complete, Escape to cancel
-  - **Bidirectional communication**: UI prompts/intents trigger agent turns via `pi.sendMessage({ triggerTurn: true })`
-  - **Non-blocking UI**: Tool returns immediately with MCP result, agent responds to UI interactions as separate turns
-  - **Real-time agent responses**: Each prompt/intent from UI triggers a new agent turn immediately
-  - **Full action coverage**: Agent notified for prompts, intents, notifications, link opens, and tool calls
-  - **`mcp({ action: "ui-messages" })`**: Retrieve accumulated messages from completed UI sessions
+  - UI prompts/intents trigger agent turns via `pi.sendMessage({ triggerTurn: true })`
+  - `mcp({ action: "ui-messages" })` retrieves accumulated messages from UI sessions
 
-- **Logger module** (`logger.ts`) - Centralized logging with:
-  - Log levels (debug/info/warn/error)
-  - Contextual child loggers (server, session, tool)
-  - Enable debug mode via `MCP_UI_DEBUG=1` environment variable
+- **Session reuse** - When the agent calls the same tool while its UI is already open, results push to the existing window instead of replacing it. Per-call stream IDs with independent sequences. Error results scoped to the individual call.
 
-- **Error types** (`errors.ts`) - Structured errors with recovery hints:
-  - `ResourceFetchError`, `ResourceParseError` - UI resource loading failures
-  - `BridgeConnectionError` - AppBridge communication issues
-  - `ConsentError` - Tool call consent required/denied
-  - `SessionError`, `ServerError` - Session and server lifecycle errors
-  - `wrapError()` helper for consistent error handling
+- **Glimpse integration** - MCP UI opens in a native macOS WKWebView window instead of a browser tab when [Glimpse](https://github.com/hazat/glimpse) is installed (`pi install npm:glimpseui`). Falls back to browser on non-macOS or when unavailable. Override with `MCP_UI_VIEWER=browser` or `MCP_UI_VIEWER=glimpse`.
 
-- **Test suite** - 178 tests covering:
-  - Consent manager modes and state transitions
-  - UI resource handler parsing and validation
-  - Host HTML template generation and XSS prevention
-  - Logger levels, context, and handlers
-  - Error types and helper functions
+- **Logger module** (`logger.ts`) - Centralized logging with levels (debug/info/warn/error), contextual child loggers, and `MCP_UI_DEBUG=1` env var.
 
-- **Interactive visualizer example** (`examples/interactive-visualizer`) - Minimal MCP server demonstrating charts, bidirectional communication, and streaming:
-  - `show_chart` tool renders bar, line, pie, and doughnut charts via Chart.js
-  - Progressive streaming: datasets arrive one at a time, chart builds live
-  - Bidirectional messaging: send text from the UI back to the agent
-  - Self-contained HTML app bundled for iframe hosting
+- **Error types** (`errors.ts`) - Structured errors with recovery hints: `ResourceFetchError`, `ResourceParseError`, `BridgeConnectionError`, `ConsentError`, `SessionError`, `ServerError`, and `wrapError()` helper.
 
-- **Glimpse integration** - MCP UI opens in a native macOS WKWebView window instead of a browser tab when `glimpseui` is installed (`npm install -g glimpseui`). Falls back to browser on non-macOS or when unavailable. Override with `MCP_UI_VIEWER=browser` or `MCP_UI_VIEWER=glimpse`.
+- **Test suite** - 178 tests covering consent manager, UI resource handler, host HTML template, logger, and error types.
+
+- **Interactive visualizer example** (`examples/interactive-visualizer`) - Minimal MCP server demonstrating charts (bar/line/pie/doughnut via Chart.js), bidirectional messaging, and streaming.
 
 ### Fixed
 - Host-iframe timing: bridge now connects before loading iframe, fixing `ui/initialize` timeout on first load
@@ -54,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Technical Notes
 - Uses local minified AppBridge bundle (408KB) to avoid CDN Zod bundling issues
-- Serves app HTML from `/ui-app` endpoint instead of blob URLs to avoid iframe sandbox issues
+- Serves app HTML from `/ui-app` endpoint instead of blob URLs to avoid iframe issues
 - SSE for real-time tool result streaming to browser
 
 ## [2.1.2] - 2026-02-03
