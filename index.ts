@@ -7,7 +7,7 @@ import { buildProxyDescription, createDirectToolExecutor, resolveDirectTools } f
 import { flushMetadataCache, initializeMcp, updateStatusBar } from "./init.js";
 import { loadMetadataCache } from "./metadata-cache.js";
 import { executeCall, executeConnect, executeDescribe, executeList, executeSearch, executeStatus, executeUiMessages } from "./proxy-modes.js";
-import { getConfigPathFromArgv } from "./utils.js";
+import { getConfigPathFromArgv, truncateAtWord } from "./utils.js";
 import { initializeOAuth } from "./mcp-auth-flow.js";
 
 export default function mcpAdapter(pi: ExtensionAPI) {
@@ -34,6 +34,7 @@ export default function mcpAdapter(pi: ExtensionAPI) {
       name: spec.prefixedName,
       label: `MCP: ${spec.originalName}`,
       description: spec.description || "(no description)",
+      promptSnippet: truncateAtWord(spec.description, 100) || `MCP tool from ${spec.serverName}`,
       parameters: Type.Unsafe<Record<string, unknown>>(spec.inputSchema || { type: "object", properties: {} }),
       execute: createDirectToolExecutor(() => state, () => initPromise, spec),
     });
@@ -169,6 +170,7 @@ export default function mcpAdapter(pi: ExtensionAPI) {
     name: "mcp",
     label: "MCP",
     description: buildProxyDescription(earlyConfig, earlyCache, directSpecs),
+    promptSnippet: "MCP gateway - connect to MCP servers and call their tools",
     parameters: Type.Object({
       tool: Type.Optional(Type.String({ description: "Tool name to call (e.g., 'xcodebuild_list_sims')" })),
       args: Type.Optional(Type.String({ description: "Arguments as JSON string (e.g., '{\"key\": \"value\"}')" })),
