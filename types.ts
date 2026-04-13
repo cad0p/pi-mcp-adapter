@@ -305,6 +305,8 @@ export interface ServerEntry {
   exposeResources?: boolean;
   // Direct tool registration
   directTools?: boolean | string[];
+  // Exclude specific MCP tools/resources by original or prefixed name
+  excludeTools?: string[];
   // Debug
   debug?: boolean;  // Show server stderr (default: false)
 }
@@ -391,4 +393,33 @@ export function formatToolName(
 ): string {
   const p = getServerPrefix(serverName, prefix);
   return p ? `${p}_${toolName}` : toolName;
+}
+
+function normalizeToolName(value: string): string {
+  return value.replace(/-/g, "_");
+}
+
+export function isToolExcluded(
+  toolName: string,
+  serverName: string,
+  prefix: "server" | "none" | "short",
+  excludeTools?: unknown
+): boolean {
+  if (!Array.isArray(excludeTools) || excludeTools.length === 0) return false;
+
+  const candidates = new Set<string>([
+    normalizeToolName(toolName),
+    normalizeToolName(formatToolName(toolName, serverName, prefix)),
+    normalizeToolName(formatToolName(toolName, serverName, "server")),
+    normalizeToolName(formatToolName(toolName, serverName, "short")),
+  ]);
+
+  for (const excluded of excludeTools) {
+    if (typeof excluded !== "string") continue;
+    if (candidates.has(normalizeToolName(excluded))) {
+      return true;
+    }
+  }
+
+  return false;
 }

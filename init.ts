@@ -90,7 +90,7 @@ export async function initializeMcp(
     }
 
     if (cache?.servers?.[name] && isServerCacheValid(cache.servers[name], definition)) {
-      const metadata = reconstructToolMetadata(name, cache.servers[name], prefix, definition.exposeResources);
+      const metadata = reconstructToolMetadata(name, cache.servers[name], prefix, definition);
       toolMetadata.set(name, metadata);
     }
   }

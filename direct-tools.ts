@@ -7,7 +7,7 @@ import { isServerCacheValid } from "./metadata-cache.js";
 import { formatSchema } from "./tool-metadata.js";
 import { transformMcpContent } from "./tool-registrar.js";
 import { maybeStartUiSession, type UiSessionRuntime } from "./ui-session.js";
-import { formatToolName } from "./types.js";
+import { formatToolName, isToolExcluded } from "./types.js";
 import { resourceNameToToolName } from "./resource-tools.js";
 
 const BUILTIN_NAMES = new Set(["read", "bash", "edit", "write", "grep", "find", "ls", "mcp"]);
@@ -68,6 +68,7 @@ export function resolveDirectTools(
 
     for (const tool of serverCache.tools ?? []) {
       if (toolFilter !== true && !toolFilter.includes(tool.name)) continue;
+      if (isToolExcluded(tool.name, serverName, prefix, definition.excludeTools)) continue;
       const prefixedName = formatToolName(tool.name, serverName, prefix);
       if (BUILTIN_NAMES.has(prefixedName)) {
         console.warn(`MCP: skipping direct tool "${prefixedName}" (collides with builtin)`);
@@ -93,6 +94,7 @@ export function resolveDirectTools(
       for (const resource of serverCache.resources ?? []) {
         const baseName = `get_${resourceNameToToolName(resource.name)}`;
         if (toolFilter !== true && !toolFilter.includes(baseName)) continue;
+        if (isToolExcluded(baseName, serverName, prefix, definition.excludeTools)) continue;
         const prefixedName = formatToolName(baseName, serverName, prefix);
         if (BUILTIN_NAMES.has(prefixedName)) {
           console.warn(`MCP: skipping direct resource tool "${prefixedName}" (collides with builtin)`);
@@ -145,6 +147,7 @@ export function buildProxyDescription(
   cache: MetadataCache | null,
   directSpecs: DirectToolSpec[],
 ): string {
+  const prefix = config.settings?.toolPrefix ?? "server";
   let desc = `MCP gateway - connect to MCP servers and call their tools.\n`;
 
   const directByServer = new Map<string, number>();
@@ -162,8 +165,15 @@ export function buildProxyDescription(
   for (const serverName of Object.keys(config.mcpServers)) {
     const entry = cache?.servers?.[serverName];
     const definition = config.mcpServers[serverName];
-    const toolCount = entry?.tools?.length ?? 0;
-    const resourceCount = definition?.exposeResources !== false ? (entry?.resources?.length ?? 0) : 0;
+    const toolCount = (entry?.tools ?? []).filter(
+      (tool) => !isToolExcluded(tool.name, serverName, prefix, definition.excludeTools),
+    ).length;
+    const resourceCount = definition?.exposeResources !== false
+      ? (entry?.resources ?? []).filter((resource) => {
+          const baseName = `get_${resourceNameToToolName(resource.name)}`;
+          return !isToolExcluded(baseName, serverName, prefix, definition.excludeTools);
+        }).length
+      : 0;
     const totalItems = toolCount + resourceCount;
     if (totalItems === 0) continue;
     const directCount = directByServer.get(serverName) ?? 0;

@@ -91,6 +91,7 @@ Two calls instead of 26 tools cluttering the context.
 | `idleTimeout` | Minutes before idle disconnect (overrides global) |
 | `exposeResources` | Expose MCP resources as tools (default: true) |
 | `directTools` | `true`, `string[]`, or `false` — register tools individually instead of through proxy |
+| `excludeTools` | `string[]` of tool names to hide (matches original names like `get_screenshot` and prefixed names like `figma_get_screenshot`) |
 | `debug` | Show server stderr (default: false) |
 
 ### Lifecycle Modes
@@ -169,6 +170,22 @@ To set a global default for all servers:
 ```
 
 Per-server `directTools` overrides the global setting. The example above registers direct tools for every server except `huge-server`.
+
+To exclude specific tools while still using `directTools: true`, add `excludeTools` on the server:
+
+```json
+{
+  "mcpServers": {
+    "figma": {
+      "url": "http://localhost:3845/mcp",
+      "directTools": true,
+      "excludeTools": ["get_figjam", "figma_get_code_connect_map"]
+    }
+  }
+}
+```
+
+`excludeTools` filters direct tools, proxy search/list/describe, and the `/mcp` panel view.
 
 Each direct tool costs ~150-300 tokens in the system prompt (name + description + schema). Good for targeted sets of 5-20 tools. For servers with 75+ tools, stick with the proxy or pick specific tools with a `string[]`.
 
