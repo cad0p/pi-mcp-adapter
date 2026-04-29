@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-04-29
+
+### Fixed
+- Respected `PI_CODING_AGENT_DIR` for Pi-owned MCP config and state files, including metadata cache, npx cache, onboarding state, OAuth credentials, and `pi-mcp-adapter init` writes.
+
 ## [2.5.1] - 2026-04-24
 
 ### Fixed
